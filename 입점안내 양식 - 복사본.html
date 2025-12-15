@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feelow Partners - 입점 제안</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Playfair+Display:wght@700&display=swap');
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #fafaf9; color: #44403c; }
+        .font-serif { font-family: 'Playfair Display', serif; }
+        .animate-fade-in-up { animation: fadeInUp 0.8s ease-out; }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .cursor-wait { cursor: wait; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        // --- COMPONENTS ---
+
+        // 0. Admin Dashboard (관리자 화면 시뮬레이션)
+        const AdminDashboard = ({ onClose }) => {
+            const dummyData = [
+                { id: 1, brandName: "센트 오브 서울", repName: "김철수", contact: "010-1234-5678", email: "seoul@scent.com", bizNum: "123-45-67890", category: "향수 (화장품판매 등록제품)", description: "서울의 향기를 담은 브랜드입니다.", createdAt: new Date() },
+                { id: 2, brandName: "무드 캔들", repName: "이영희", contact: "010-9876-5432", email: "mood@candle.com", bizNum: "111-22-33333", category: "캔들", description: "천연 소이 캔들 전문입니다. 입점 문의드립니다.", createdAt: new Date() }
+            ];
+            const groupedApps = useMemo(() => {
+                const groups = {};
+                dummyData.forEach(app => {
+                    const cat = app.category || '기타';
+                    if (!groups[cat]) groups[cat] = [];
+                    groups[cat].push(app);
+                });
+                return groups;
+            }, []);
+            return (
+                <div className="min-h-screen bg-stone-100 p-8 animate-fade-in">
+                    <div className="max-w-6xl mx-auto">
+                        <div className="flex justify-between items-center mb-8">
+                            <div>
+                                <h1 className="text-3xl font-bold text-stone-800 font-serif">Feelow Partners Admin</h1>
+                                <p className="text-stone-500">접수된 입점 신청서 현황 (관리자 데모)</p>
+                            </div>
+                            <button onClick={onClose} className="bg-stone-800 text-white px-6 py-2 rounded-lg hover:bg-stone-700 transition-colors">
+                                사이트로 돌아가기
+                            </button>
+                        </div>
+                        <div className="grid grid-cols-1 gap-8">
+                            {Object.keys(groupedApps).map((category) => (
+                                <div key={category} className="bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden">
+                                    <div className="bg-teal-50 px-6 py-4 border-b border-teal-100 flex justify-between items-center">
+                                        <h3 className="font-bold text-teal-800 flex items-center">
+                                            <i className="fa-solid fa-box-open mr-2"></i>
+                                            {category}
+                                        </h3>
+                                        <span className="bg-white text-teal-600 text-xs font-bold px-2 py-1 rounded-full border border-teal-200">
+                                            {groupedApps[category].length}건
+                                        </span>
+                                    </div>
+                                    <div className="divide-y divide-stone-100">
+                                        {groupedApps[category].map((app) => (
+                                            <div key={app.id} className="p-6 hover:bg-stone-50 transition-colors">
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <div>
+                                                        <h4 className="text-lg font-bold text-stone-800">{app.brandName}</h4>
+                                                        <p className="text-sm text-stone-500">대표: {app.repName} | 사업자번호: {app.bizNum}</p>
+                                                    </div>
+                                                    <span className="text-xs text-stone-400">
+                                                        {app.createdAt.toLocaleDateString()}
+                                                    </span>
+                                                </div>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 text-sm">
+                                                    <div className="bg-stone-50 p-3 rounded-lg border border-stone-100">
+                                                        <span className="block text-xs font-bold text-stone-400 mb-1">연락처</span>
+                                                        <div className="text-stone-700">{app.contact}</div>
+                                                        <div className="text-stone-700">{app.email}</div>
+                                                    </div>
+                                                    <div className="bg-stone-50 p-3 rounded-lg border border-stone-100">
+                                                        <span className="block text-xs font-bold text-stone-400 mb-1">문의/소개</span>
+                                                        <p className="text-stone-700 whitespace-pre-wrap">{app.description}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // 0. Application Form Modal
+        const ApplicationForm = ({ onClose }) => {
+            const [submitted, setSubmitted] = useState(false);
+            const [loading, setLoading] = useState(false);
+            
+            const [formData, setFormData] = useState({
+                brandName: '', repName: '', contact: '', email: '', bizNum: '', category: '비분사액체 (디퓨저)', description: ''
+            });
+            const handleChange = (e) => {
+                setFormData({ ...formData, [e.target.name]: e.target.value });
+            };
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                setLoading(true);
+                setTimeout(() => {
+                    setLoading(false);
+                    setSubmitted(true);
+                }, 1500);
+            };
+
+            if (submitted) {
+                return (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
+                        <div className="bg-white rounded-2xl p-8 max-w-md w-full text-center shadow-2xl relative border-t-4 border-teal-600">
+                            <button onClick={onClose} className="absolute top-4 right-4 text-stone-400 hover:text-stone-600 transition-colors">
+                                <i className="fa-solid fa-xmark text-xl"></i>
+                            </button>
+                            <div className="w-20 h-20 bg-teal-50 rounded-full flex items-center justify-center mx-auto mb-6 text-teal-600 shadow-inner">
+                                <i className="fa-solid fa-check text-3xl"></i>
+                            </div>
+                            <h3 className="text-2xl font-bold text-stone-800 mb-2 font-serif">신청이 완료되었습니다!</h3>
+                            <p className="text-stone-600 mb-8 leading-relaxed text-sm">
+                                Feelow 파트너스팀이 브랜드 검토 후<br/>
+                                <span className="font-bold text-teal-700 underline">24시간 이내</span>에 연락드리겠습니다.<br/>
+                                잠시만 기다려 주세요! 🌿
+                            </p>
+                            <button onClick={onClose} className="bg-stone-800 text-white px-8 py-3.5 rounded-xl font-bold hover:bg-stone-700 w-full transition-all shadow-lg">
+                                확인
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in overflow-y-auto">
+                    <div className="bg-white rounded-2xl p-8 max-w-lg w-full shadow-2xl relative my-8 border-t-4 border-teal-600">
+                        <button onClick={onClose} className="absolute top-4 right-4 text-stone-400 hover:text-stone-600 transition-colors">
+                            <i className="fa-solid fa-xmark text-xl"></i>
+                        </button>
+                        
+                        <div className="text-center mb-8">
+                            <span className="text-teal-600 font-bold text-xs tracking-widest uppercase mb-2 block">Partner Application</span>
+                            <h2 className="text-2xl font-bold text-stone-800 font-serif">Feelow 파트너스 입점 신청</h2>
+                            <p className="text-stone-500 text-sm mt-2">브랜드의 성장을 위한 첫 걸음, Feelow가 함께합니다.</p>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-5">
+                            <div>
+                                <label className="block text-sm font-bold text-stone-700 mb-1.5">브랜드명 <span className="text-red-500">*</span></label>
+                                <input name="brandName" onChange={handleChange} required type="text" placeholder="예: 필로우 퍼퓸" className="w-full p-3.5 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:border-teal-500 focus:bg-white transition-all text-sm placeholder:text-stone-400" />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-bold text-stone-700 mb-1.5">대표자명 <span className="text-red-500">*</span></label>
+                                    <input name="repName" onChange={handleChange} required type="text" placeholder="홍길동" className="w-full p-3.5 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:border-teal-500 focus:bg-white transition-all text-sm placeholder:text-stone-400" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-stone-700 mb-1.5">연락처 <span className="text-red-500">*</span></label>
+                                    <input name="contact" onChange={handleChange} required type="tel" placeholder="010-0000-0000" className="w-full p-3.5 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:border-teal-500 focus:bg-white transition-all text-sm placeholder:text-stone-400" />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-bold text-stone-700 mb-1.5">이메일 <span className="text-red-500">*</span></label>
+                                    <input name="email" onChange={handleChange} required type="email" placeholder="contact@brand.com" className="w-full p-3.5 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:border-teal-500 focus:bg-white transition-all text-sm placeholder:text-stone-400" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-stone-700 mb-1.5">사업자등록번호</label>
+                                    <input name="bizNum" onChange={handleChange} type="text" placeholder="000-00-00000" className="w-full p-3.5 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:border-teal-500 focus:bg-white transition-all text-sm placeholder:text-stone-400" />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-stone-700 mb-1.5">주력 카테고리</label>
+                                <div className="relative">
+                                    <select name="category" onChange={handleChange} className="w-full p-3.5 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:border-teal-500 focus:bg-white transition-all text-sm text-stone-600 appearance-none">
+                                        <option>비분사액체 (디퓨저)</option>
+                                        <option>함침물 (석고.사쉐)</option>
+                                        <option>분무기형 (멀티퍼퓸.탈취제.룸스프레이.드레스퍼퓸)</option>
+                                        <option>지속방출형 (기계 분사형)</option>
+                                        <option>캔들</option>
+                                        <option>기타 (방향제)</option>
+                                        <option>향수 (화장품판매 등록제품)</option>
+                                        <option>비누 (화장품판매 등록제품)</option>
+                                    </select>
+                                    <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none text-stone-400">
+                                        <i className="fa-solid fa-arrow-right rotate-90"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-stone-700 mb-1.5">문의사항 / 브랜드 소개</label>
+                                <textarea name="description" onChange={handleChange} rows="3" placeholder="간단한 브랜드 소개나 궁금한 점을 적어주세요." className="w-full p-3.5 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:border-teal-500 focus:bg-white transition-all text-sm placeholder:text-stone-400 resize-none"></textarea>
+                            </div>
+                            
+                            <div className="pt-4">
+                                <button 
+                                    type="submit" 
+                                    disabled={loading}
+                                    className={`w-full bg-teal-700 text-white font-bold py-4 rounded-xl hover:bg-teal-800 transition-all shadow-lg flex items-center justify-center transform active:scale-95 ${loading ? 'opacity-80 cursor-wait' : ''}`}
+                                >
+                                    {loading ? (
+                                        <span className="flex items-center">
+                                            <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></span>
+                                            저장 중...
+                                        </span>
+                                    ) : (
+                                        <span className="flex items-center">
+                                            입점 신청 완료하기
+                                            <i className="fa-solid fa-arrow-right ml-2"></i>
+                                        </span>
+                                    )}
+                                </button>
+                                <p className="text-center text-xs text-stone-400 mt-4">
+                                    신청서를 제출하시면 개인정보 처리방침에 동의하는 것으로 간주합니다.
+                                </p>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+
+        // 1. Hero Section
+        const Hero = ({ onOpenForm }) => (
+            <header className="relative h-[80vh] flex items-center justify-center bg-stone-900 text-white overflow-hidden">
+                <div 
+                    className="absolute inset-0 bg-cover bg-center opacity-40 transition-transform duration-1000 hover:scale-105"
+                    style={{ backgroundImage: "url('https://images.unsplash.com/photo-1615634260167-c8cdede054de?q=80&w=2000&auto=format&fit=crop')" }}
+                ></div>
+                
+                <div className="relative z-10 text-center px-4 animate-fade-in-up">
+                    <span className="text-teal-400 font-bold tracking-widest text-sm mb-4 block">FOR BRAND PARTNERS</span>
+                    <h1 className="text-4xl md:text-6xl font-serif font-bold mb-6 leading-tight">
+                        혼자서는 '점'이지만,<br/>
+                        함께라면 '흐름(Flow)'이 됩니다.
+                    </h1>
+                    <p className="text-lg md:text-xl text-stone-200 max-w-2xl mx-auto mb-10 leading-relaxed">
+                        8년의 노하우, 50개의 브랜드가 만드는 K-Scent 생태계.<br/>
+                        수수료 걱정 없는 '상생 플랫폼' Feelow와 함께 성장하세요.
+                    </p>
+                    <button 
+                        onClick={onOpenForm}
+                        className="bg-teal-600 hover:bg-teal-700 text-white font-bold py-4 px-10 rounded-full transition-all transform hover:scale-105 shadow-lg flex items-center mx-auto"
+                    >
+                        입점 상담 신청하기 <i className="fa-solid fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+            </header>
+        );
+
+        // 2. The "Why Together?" Data Section
+        const WhyTogether = () => {
+            return (
+                <section className="py-20 px-4 max-w-6xl mx-auto">
+                    <div className="text-center mb-16">
+                        <h2 className="text-3xl font-bold text-stone-800 mb-4">왜 뭉쳐야 더 많이 팔릴까요?</h2>
+                        <p className="text-stone-600">개별 브랜드몰 vs Feelow 플랫폼 비교 데이터</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                        <div className="bg-white p-8 rounded-2xl shadow-lg border border-stone-200">
+                            <h3 className="text-xl font-bold mb-6 text-stone-800 border-b pb-2">📦 판매 방식 비교 (Profit Simulation)</h3>
+                            <div className="space-y-6">
+                                <div>
+                                    <div className="flex justify-between text-sm text-stone-500 mb-1">
+                                        <span className="flex items-center"><i className="fa-solid fa-link mr-1"></i> Type A. 일반(단품) 주문</span>
+                                        <span className="text-teal-600 font-bold">브랜드사 직접 발송</span>
+                                    </div>
+                                    <div className="bg-stone-50 p-4 rounded-lg flex items-center justify-between border border-stone-200">
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-bold text-stone-700">판매 수익 100% 가져가세요</span>
+                                            <span className="text-xs text-stone-500 mt-1">고객 결제 → 브랜드사 직입금</span>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="block text-xs text-stone-400">판매 수수료</span>
+                                            <span className="text-xl font-bold text-teal-600">0%</span>
+                                        </div>
+                                    </div>
+                                    <p className="text-right text-[10px] text-stone-400 mt-1">* 월 서버 유지비 3~5만원 별도</p>
+                                </div>
+
+                                <div className="relative">
+                                    <div className="absolute -left-3 top-1/2 transform -translate-y-1/2 -translate-x-full hidden md:block text-teal-600 text-2xl animate-pulse">
+                                        <i className="fa-solid fa-arrow-right"></i>
+                                    </div>
+                                    <div className="flex justify-between text-sm text-teal-700 font-bold mb-1">
+                                        <span className="flex items-center"><i className="fa-solid fa-box-open mr-1"></i> Type B. D-Day(합배송) 주문</span>
+                                        <span>Feelow 풀필먼트 대행</span>
+                                    </div>
+                                    <div className="bg-teal-50 p-4 rounded-lg border-2 border-teal-500 shadow-md transform transition-transform hover:scale-[1.02]">
+                                        <div className="flex justify-between items-center mb-2 border-b border-teal-200 pb-2">
+                                            <span className="text-teal-900 text-sm">브랜드 A + B + C 합포장</span>
+                                            <span className="text-teal-800 font-bold text-sm">물류 업무 해방!</span>
+                                        </div>
+                                        <div className="flex justify-between items-end">
+                                            <span className="text-xs text-teal-600 w-2/3">포장/배송/CS는 Feelow가 합니다.<br/>대표님은 제품만 보내주세요.</span>
+                                            <div className="text-right">
+                                                <span className="block text-xs text-teal-600/70">통합 수수료</span>
+                                                <span className="text-lg font-bold text-stone-800">발생</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-8">
+                            <div className="flex items-start group">
+                                <div className="bg-teal-100 p-3 rounded-full text-teal-700 mr-4 group-hover:bg-teal-600 group-hover:text-white transition-colors">
+                                    <i className="fa-solid fa-arrow-trend-up text-xl"></i>
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-lg text-stone-800">1. 마진율 극대화 (Direct Link)</h4>
+                                    <p className="text-stone-600 text-sm mt-1 leading-relaxed">단품 구매 고객은 대표님 자사몰처럼 직접 판매하세요. Feelow는 중개 수수료를 0원으로 낮춰 대표님의 순수익을 지켜드립니다.</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start group">
+                                <div className="bg-teal-100 p-3 rounded-full text-teal-700 mr-4 group-hover:bg-teal-600 group-hover:text-white transition-colors">
+                                    <i className="fa-solid fa-truck-fast text-xl"></i>
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-lg text-stone-800">2. 물류 업무 효율화 (Fulfillment)</h4>
+                                    <p className="text-stone-600 text-sm mt-1 leading-relaxed">합배송 주문 건은 주 1회 본사로 보내기만 하면 끝. 복잡한 합포장과 배송 CS는 Feelow 전문 물류팀이 전담합니다.</p>
+                                </div>
+                            </div>
+                            <div className="flex items-start group">
+                                <div className="bg-teal-100 p-3 rounded-full text-teal-700 mr-4 group-hover:bg-teal-600 group-hover:text-white transition-colors">
+                                    <i className="fa-solid fa-shield-halved text-xl"></i>
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-lg text-stone-800">3. 규제 리스크 방어 (8년 노하우)</h4>
+                                    <p className="text-stone-600 text-sm mt-1 leading-relaxed">단순 판매처가 아닙니다. 2025년 강화되는 규제, Feelow가 미리 가이드하고 막아드립니다. (KATRI 제휴 10% 할인)</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            );
+        };
+
+        // 3. Online & Offline Benefit Tabs (수정됨: 오프라인 탭 이미지 적용)
+        const Benefits = () => {
+            const [tab, setTab] = useState('online');
+
+            return (
+                <section className="bg-stone-100 py-20 px-4">
+                    <div className="max-w-6xl mx-auto">
+                        <h2 className="text-3xl font-bold text-center text-stone-800 mb-10">파트너를 위한 온/오프라인 솔루션</h2>
+                        
+                        <div className="flex justify-center mb-8">
+                            <button 
+                                onClick={() => setTab('online')}
+                                className={`px-8 py-3 rounded-l-full font-bold transition-all ${tab === 'online' ? 'bg-teal-700 text-white shadow-lg' : 'bg-white text-stone-500 hover:bg-stone-50'}`}
+                            >
+                                📱 온라인 (Hybrid)
+                            </button>
+                            <button 
+                                onClick={() => setTab('offline')}
+                                className={`px-8 py-3 rounded-r-full font-bold transition-all ${tab === 'offline' ? 'bg-teal-700 text-white shadow-lg' : 'bg-white text-stone-500 hover:bg-stone-50'}`}
+                            >
+                                🏢 오프라인 (Lounge)
+                            </button>
+                        </div>
+
+                        <div className="bg-white rounded-3xl p-8 md:p-12 shadow-xl min-h-[500px] flex items-center transition-all duration-500">
+                            {tab === 'online' ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-10 w-full animate-fade-in-up">
+                                    <div className="order-2 md:order-1">
+                                        <span className="text-teal-600 font-bold text-sm tracking-wider mb-2 block">ONLINE STRATEGY</span>
+                                        <h3 className="text-2xl font-bold text-stone-800 mb-4">수수료는 빼고(-),<br/>편리함은 더했습니다(+).</h3>
+                                        <div className="space-y-6">
+                                            <div className="flex items-start bg-stone-50 p-4 rounded-xl border border-stone-200">
+                                                <div className="bg-white p-2 rounded-lg mr-4 text-stone-700 shadow-sm"><i className="fa-solid fa-link"></i></div>
+                                                <div>
+                                                    <h4 className="font-bold text-stone-800 text-sm">Type A. 단품 직배송 (Direct)</h4>
+                                                    <p className="text-xs text-stone-500 mt-1 mb-2">고객이 단품만 원할 땐 브랜드사에서 직접 보냅니다.</p>
+                                                    <span className="bg-red-100 text-red-600 text-xs font-bold px-2 py-1 rounded">수수료 0%</span>
+                                                    <span className="text-[10px] text-stone-400 ml-2">(월 유지비 3~5만원)</span>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-start bg-teal-50 p-4 rounded-xl border border-teal-200">
+                                                <div className="bg-white p-2 rounded-lg mr-4 text-teal-700 shadow-sm"><i className="fa-solid fa-box"></i></div>
+                                                <div>
+                                                    <h4 className="font-bold text-teal-900 text-sm">Type B. D-Day 풀필먼트 (Hub)</h4>
+                                                    <p className="text-xs text-teal-700 mt-1 mb-2">여러 브랜드 제품을 살 땐 Feelow가 모아서 보냅니다.</p>
+                                                    <span className="bg-teal-200 text-teal-800 text-xs font-bold px-2 py-1 rounded">물류 대행 수수료</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="order-1 md:order-2 flex justify-center items-center bg-stone-100 rounded-2xl overflow-hidden min-h-[300px] relative">
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                            <div className="text-center">
+                                                <i className="fa-solid fa-truck-fast text-8xl text-stone-300 mx-auto mb-4"></i>
+                                                <p className="text-stone-400 font-bold">Hybrid Logistics System</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 w-full animate-fade-in-up">
+                                    <div className="order-2 lg:order-1">
+                                        <span className="text-teal-600 font-bold text-sm tracking-wider mb-2 block">HYBRID DOCENT STRATEGY</span>
+                                        <h3 className="text-2xl font-bold text-stone-800 mb-6">오직 향에만 집중하는 공간,<br/>대중 속의 프라이빗 큐레이션</h3>
+                                        
+                                        <div className="space-y-6">
+                                            <div className="flex items-start">
+                                                <div className="bg-stone-100 p-2 rounded-lg mr-4"><i className="fa-solid fa-users text-teal-600 text-xl"></i></div>
+                                                <div>
+                                                    <h4 className="font-bold text-stone-800">1. 트래픽과 VIP를 동시에 (공간 이원화)</h4>
+                                                    <p className="text-sm text-stone-600 mt-1">
+                                                        <strong>Open Zone:</strong> 누구나 자유롭게 시향하고 SNS에 공유하는 바이럴 공간.<br/>
+                                                        <strong>VIP Docent Zone:</strong> 유리 부스 안에서 전문가의 1:1 케어를 받는 프라이빗 경험.
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-start">
+                                                <div className="bg-stone-100 p-2 rounded-lg mr-4"><i className="fa-solid fa-ticket text-teal-600 text-xl"></i></div>
+                                                <div>
+                                                    <h4 className="font-bold text-stone-800">2. '티켓 & 페이백'으로 구매 전환 극대화</h4>
+                                                    <p className="text-sm text-stone-600 mt-1">
+                                                        유료 예약제로 허수를 거르고, 본품 구매 시 <strong>예약금 전액을 할인</strong>해 드립니다.
+                                                        또한, 향의 간섭을 막기 위해 음료 대신 <strong>'커스텀 시향 키트(Custom Kit)'</strong>를 선물하여 만족도를 높입니다.
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-start">
+                                                <div className="bg-stone-100 p-2 rounded-lg mr-4"><i className="fa-solid fa-crown text-teal-600 text-xl"></i></div>
+                                                <div>
+                                                    <h4 className="font-bold text-stone-800">3. 저가 경쟁 거부, '가치' 경쟁의 승리</h4>
+                                                    <p className="text-sm text-stone-600 mt-1">
+                                                        다이소와 가격으로 싸우지 마세요. 전문 큐레이터(도슨트)가 
+                                                        브랜드의 철학을 해설하여 제품을 '작품'으로 격상시킵니다.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 이 부분이 사진으로 교체되었습니다 */}
+                                    <div className="order-1 lg:order-2 rounded-2xl overflow-hidden shadow-lg border border-stone-200 relative group h-[400px] lg:h-auto">
+                                        <img 
+                                            src="./오프라인 매장 풍경.png" 
+                                            alt="Feelow Offline Lounge" 
+                                            className="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6">
+                                            <span className="bg-teal-600 text-white text-xs font-bold px-2 py-1 rounded w-fit mb-2">실제 운영 모습</span>
+                                            <p className="text-white font-bold text-lg leading-tight">
+                                                "누구나 들어오지만,<br/>아무나 경험할 수 없는 공간"
+                                            </p>
+                                            <p className="text-stone-300 text-xs mt-2">
+                                                <i className="fa-solid fa-location-dot mr-1"></i> Feelow Vibe Underground
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </section>
+            );
+        }
+
+        // 4. Footer & CTA
+        const Footer = ({ onOpenForm, onOpenAdmin }) => (
+            <footer className="bg-stone-900 text-stone-400 py-12 px-4 text-center relative">
+                <div className="max-w-4xl mx-auto">
+                    <h2 className="text-2xl md:text-3xl text-white font-bold mb-6 font-serif">Ready to Flow with Feelow?</h2>
+                    <p className="mb-8">지금 입점 신청하시면, <strong>KATRI 인증 비용 10% 할인 혜택</strong>과<br/>초기 브랜드 컨설팅(무료)을 제공해 드립니다.</p>
+                    <div className="flex flex-col md:flex-row justify-center gap-4">
+                        <button 
+                            onClick={onOpenForm}
+                            className="bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-8 rounded-lg transition-colors shadow-lg"
+                        >
+                            입점 신청서 작성하기
+                        </button>
+                        <button className="border border-stone-600 hover:border-stone-400 text-stone-300 py-3 px-8 rounded-lg transition-colors">
+                            브랜드 소개서 다운로드
+                        </button>
+                    </div>
+                    <p className="mt-12 text-xs text-stone-600">© 2025 Feelow. All rights reserved. | Contact: partner@feelow.com</p>
+                </div>
+                
+                {/* Admin Link */}
+                <button 
+                    onClick={onOpenAdmin}
+                    className="absolute bottom-4 right-4 text-stone-700 hover:text-stone-500 transition-colors opacity-50 hover:opacity-100"
+                    title="관리자 페이지"
+                >
+                    <i className="fa-solid fa-lock"></i>
+                </button>
+            </footer>
+        );
+
+        // --- Main App ---
+        const App = () => {
+            const [isFormOpen, setIsFormOpen] = useState(false);
+            const [isAdminOpen, setIsAdminOpen] = useState(false);
+
+            return (
+                <div className="min-h-screen font-sans text-stone-800 bg-stone-50">
+                    <style>{`
+                        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+                        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+                        .animate-fade-in-up { animation: fadeInUp 0.8s ease-out; }
+                        .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+                        .cursor-wait { cursor: wait; }
+                    `}</style>
+                    
+                    {isAdminOpen ? (
+                        <AdminDashboard onClose={() => setIsAdminOpen(false)} />
+                    ) : (
+                        <>
+                            <Hero onOpenForm={() => setIsFormOpen(true)} />
+                            <WhyTogether />
+                            <Benefits />
+                            <Footer 
+                                onOpenForm={() => setIsFormOpen(true)} 
+                                onOpenAdmin={() => setIsAdminOpen(true)}
+                            />
+                        </>
+                    )}
+
+                    {/* Application Modal */}
+                    {isFormOpen && <ApplicationForm onClose={() => setIsFormOpen(false)} />}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
